@@ -1,0 +1,1011 @@
+:root {
+  color-scheme: light dark;
+
+  /* Type */
+  --font-heading: 'Fredoka', system-ui, 'Segoe UI', sans-serif;
+  --font-body: 'Karla', system-ui, 'Segoe UI', sans-serif;
+
+  /* Spacing scale */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+
+  /* Radius scale */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Palette — warm, off-white, terracotta accent */
+  --bg: #faf6ef;
+  --surface: #fffdfa;
+  --surface-alt: #f3ece1;
+  --border: #e7ddcd;
+  --text: #2b241c;
+  --text-dim: #6f6353;
+  --accent: #a8501f;
+  --accent-hover: #8f4319;
+  --accent-contrast: #fff8f1;
+  --accent-soft: #f6e2d2;
+  --shadow: rgba(43, 36, 28, 0.1);
+
+  --ok: #227a4e;
+  --ok-bg: #e2f3e9;
+  --warn: #7a5608;
+  --warn-bg: #f7ecd3;
+  --danger: #b3261e;
+  --danger-bg: #fbe8e6;
+  --info: #2a56c6;
+  --info-bg: #e3ecfb;
+
+  /* Brand tokens — always the warm palette, never redefined for dark mode.
+     hero-bg.svg is a fixed warm image, so the header/footer/hero that frame
+     it need colors that stay consistent with it regardless of site theme. */
+  --brand-surface: #fffdfa;
+  --brand-surface-alt: #f3ece1;
+  --brand-border: #e7ddcd;
+  --brand-text: #2b241c;
+  --brand-text-dim: #6f6353;
+  --brand-accent: #a8501f;
+  --brand-accent-soft: #f6e2d2;
+  --brand-ok: #227a4e;
+  --brand-ok-bg: #e2f3e9;
+  --brand-warn: #7a5608;
+  --brand-warn-bg: #f7ecd3;
+  --brand-danger: #b3261e;
+  --brand-danger-bg: #fbe8e6;
+  --brand-info: #2a56c6;
+  --brand-info-bg: #e3ecfb;
+
+  font: 16px/1.6 var(--font-body);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #201a13;
+    --surface: #2b241b;
+    --surface-alt: #241e16;
+    --border: #3d3327;
+    --text: #f3ece1;
+    --text-dim: #b9ab97;
+    --accent: #e08a4f;
+    --accent-hover: #ec9a63;
+    --accent-contrast: #241206;
+    --accent-soft: rgba(224, 138, 79, 0.16);
+    --shadow: rgba(0, 0, 0, 0.35);
+
+    --ok: #6fd39a;
+    --ok-bg: rgba(111, 211, 154, 0.16);
+    --warn: #e0b04f;
+    --warn-bg: rgba(224, 176, 79, 0.16);
+    --danger: #e8776d;
+    --danger-bg: rgba(232, 119, 109, 0.16);
+    --info: #7fa8f0;
+    --info-bg: rgba(127, 168, 240, 0.16);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(26px, 4vw, 36px);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-2);
+}
+
+h2 {
+  font-size: 20px;
+  margin: 0 0 var(--space-2);
+}
+
+h3 {
+  font-size: 16px;
+  margin: 0 0 var(--space-2);
+}
+
+p {
+  margin: 0 0 var(--space-2);
+}
+
+/* Visible focus states everywhere — never remove these */
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* App shell */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  background: var(--brand-surface-alt) url('/images/hero-bg.svg') top center / cover no-repeat;
+  color: var(--brand-text);
+}
+
+/* Header / nav */
+
+.site-header {
+  background: var(--brand-surface);
+  border-bottom: 1px solid var(--brand-border);
+}
+
+.nav {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  text-decoration: none;
+  color: var(--brand-text);
+}
+
+.brand__icon {
+  font-size: 26px;
+  color: var(--brand-accent);
+}
+
+.brand__word {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.nav__link {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--brand-text-dim);
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.nav__link:hover {
+  color: var(--brand-text);
+  background: var(--brand-surface-alt);
+}
+
+.nav__link.active {
+  color: var(--brand-accent);
+  background: var(--brand-accent-soft);
+}
+
+/* Footer */
+
+.site-footer {
+  border-top: 1px solid var(--brand-border);
+  background: var(--brand-surface-alt);
+  padding-top: var(--space-5);
+}
+
+.site-footer__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.site-footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--brand-text);
+}
+
+.site-footer__icon {
+  font-size: 20px;
+  color: var(--brand-accent);
+}
+
+.site-footer__tagline {
+  color: var(--brand-text-dim);
+  font-size: 14px;
+  margin: 0;
+  max-width: 40ch;
+}
+
+.site-footer__links {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.site-footer__links a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-text-dim);
+  text-decoration: none;
+}
+
+.site-footer__links a:hover {
+  color: var(--brand-accent);
+}
+
+/* Page containers */
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3) var(--space-5);
+}
+
+/* A page heading with no card behind it sits directly on .app-main's fixed
+   background image — pin it to the brand palette for the same reason as .hero. */
+.page > h1 {
+  color: var(--brand-text);
+}
+
+.auth-page {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3);
+}
+
+/* Cards */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px var(--shadow);
+  color: var(--text);
+}
+
+/* auth-card is pinned to the brand palette (like the header/footer/hero)
+   so it always matches hero-bg.svg's warm tones instead of flipping dark.
+   Everything inside it that would otherwise use the adaptive theme tokens
+   gets scoped overrides below, or it'd look broken in dark mode: dark
+   inputs/buttons sitting inside a now-always-light card. */
+
+.auth-card {
+  padding: var(--space-4);
+  background: var(--brand-surface);
+  border-color: var(--brand-border);
+  color: var(--brand-text);
+}
+
+.auth-card h1 {
+  color: var(--brand-text);
+}
+
+.auth-card label {
+  color: var(--brand-text-dim);
+}
+
+.auth-card input {
+  background: var(--brand-surface-alt);
+  border-color: var(--brand-border);
+  color: var(--brand-text);
+}
+
+.auth-card input:focus-visible {
+  outline-color: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+.auth-card button:not(.btn-primary):not(.btn-danger):not(.password-field__toggle) {
+  background: var(--brand-surface-alt);
+  border-color: var(--brand-border);
+  color: var(--brand-text);
+}
+
+.auth-card button:not(.btn-primary):not(.btn-danger):not(.password-field__toggle):hover {
+  background: var(--brand-accent-soft);
+  border-color: var(--brand-text-dim);
+}
+
+.auth-card .password-field__toggle {
+  color: var(--brand-text-dim);
+}
+
+.auth-card .password-field__toggle:hover {
+  color: var(--brand-text);
+  background: var(--brand-accent-soft);
+}
+
+.auth-card [role='alert'] {
+  color: var(--brand-danger);
+}
+
+.auth-card .form-success {
+  color: var(--brand-ok);
+}
+
+.auth-card .danger-zone {
+  border-top-color: var(--brand-border);
+}
+
+.auth-card .danger-zone h2 {
+  color: var(--brand-danger);
+}
+
+.auth-card .danger-zone__copy {
+  color: var(--brand-text-dim);
+}
+
+.auth-card__oauth {
+  margin-top: var(--space-2);
+  display: flex;
+  justify-content: center;
+}
+
+.auth-card__footer-link {
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+  font-size: 14px;
+  color: var(--brand-text-dim);
+}
+
+.auth-card__footer-link a {
+  color: var(--brand-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-card__footer-link a:hover {
+  text-decoration: underline;
+}
+
+.form-success {
+  color: var(--ok);
+  font-size: 14px;
+}
+
+.dashboard-logout-btn {
+  display: block;
+  margin: var(--space-2) 0 0;
+}
+
+.danger-zone {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.danger-zone h2 {
+  font-size: 16px;
+  color: var(--danger);
+}
+
+.danger-zone__copy {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.danger-zone__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Hero banner — sits directly on .app-main's fixed-light background image,
+   so its colors are pinned to the brand palette rather than the adaptive
+   theme tokens (dark mode's light text would be unreadable on it). */
+
+.hero {
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+
+.hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand-accent);
+  margin: 0 0 var(--space-1);
+}
+
+.hero h1 {
+  color: var(--brand-text);
+  margin: 0 0 var(--space-1);
+}
+
+.hero__subtitle {
+  color: var(--brand-text-dim);
+  font-size: 16px;
+  max-width: 52ch;
+  margin: 0 auto;
+}
+
+/* Forms */
+
+form > div {
+  margin-bottom: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.password-field__toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+}
+
+.password-field__toggle:hover {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.password-field__toggle:active {
+  transform: translateY(-50%);
+}
+
+[role='alert'] {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+/* Buttons */
+
+button,
+.btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 11px 20px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+button:hover,
+.btn:hover {
+  border-color: var(--text-dim);
+  background: var(--surface-alt);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Fixed red regardless of theme — a destructive action should always read
+   as a clear warning, not shift with the adaptive accent/theme palette. */
+.btn-danger {
+  background: #b3261e;
+  border-color: #b3261e;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #96201a;
+  border-color: #96201a;
+}
+
+button:active,
+.btn:active {
+  transform: translateY(1px);
+}
+
+button:disabled,
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Badges */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  width: fit-content;
+}
+
+.badge-ok {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.badge-warn {
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.badge-danger {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.badge-status-pending {
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.badge-status-paid,
+.badge-status-shipped {
+  color: var(--info);
+  background: var(--info-bg);
+}
+
+.badge-status-delivered {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.badge-status-failed {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.badge-neutral {
+  color: var(--text-dim);
+  background: var(--surface-alt);
+}
+
+/* Image placeholder (used when a product has no imageUrl) */
+
+.image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.image-placeholder svg {
+  font-size: 28px;
+  opacity: 0.6;
+}
+
+/* Product grid */
+
+.shop-section h2 {
+  color: var(--brand-text);
+  margin-bottom: var(--space-3);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text);
+  box-shadow: 0 1px 2px var(--shadow);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.product-card:hover {
+  box-shadow: 0 10px 24px var(--shadow);
+  transform: translateY(-3px);
+}
+
+.product-card__image,
+.product-detail__image {
+  aspect-ratio: 1 / 1;
+  background: var(--surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-card__image img,
+.product-detail__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.product-card__body {
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-card__name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.product-card__price {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 16px;
+}
+
+/* Product detail */
+
+.product-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) 1fr;
+  gap: var(--space-4);
+}
+
+.product-detail__image {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.product-detail__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px var(--shadow);
+  padding: var(--space-3);
+  color: var(--text);
+}
+
+.product-detail__info h1 {
+  margin-bottom: 0;
+}
+
+.product-detail__info .product-card__price {
+  font-size: 24px;
+}
+
+.product-detail__description {
+  color: var(--text-dim);
+}
+
+.quantity-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: var(--space-1) 0;
+}
+
+.quantity-field input {
+  width: 90px;
+}
+
+@media (max-width: 700px) {
+  .product-detail {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Checkout */
+
+.checkout__layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 360px);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.checkout__form,
+.checkout__summary {
+  padding: var(--space-3);
+}
+
+.order-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-1) 0;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.order-summary-row--total {
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: var(--space-2);
+  font-weight: 700;
+  color: var(--text);
+  font-size: 16px;
+}
+
+@media (max-width: 700px) {
+  .checkout__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Orders */
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Pinned to the brand palette, same reasoning as .auth-card — always
+   matches hero-bg.svg's warm tones instead of flipping dark. */
+.order-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--brand-surface);
+  border-color: var(--brand-border);
+  color: var(--brand-text);
+}
+
+.order-row__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.order-row__product {
+  font-weight: 700;
+}
+
+.order-row__date {
+  font-size: 13px;
+  color: var(--brand-text-dim);
+}
+
+.order-row .badge-status-pending {
+  color: var(--brand-warn);
+  background: var(--brand-warn-bg);
+}
+
+.order-row .badge-status-paid,
+.order-row .badge-status-shipped {
+  color: var(--brand-info);
+  background: var(--brand-info-bg);
+}
+
+.order-row .badge-status-delivered {
+  color: var(--brand-ok);
+  background: var(--brand-ok-bg);
+}
+
+.order-row .badge-status-failed {
+  color: var(--brand-danger);
+  background: var(--brand-danger-bg);
+}
+
+.order-row__total {
+  font-weight: 700;
+}
+
+/* Admin — a utility tool, not a customer-facing page, so it keeps the
+   normal adaptive .card look rather than the pinned brand palette. */
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.admin-header h1 {
+  margin: 0;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+
+.admin-row__info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.admin-row__name {
+  font-weight: 700;
+}
+
+.admin-row__price {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.admin-row__stock {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.admin-row__actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.admin-users-section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.admin-form {
+  max-width: 520px;
+  padding: var(--space-3);
+}
+
+.admin-form__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-2);
+}
+
+.stat-tile {
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-tile__value {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.stat-tile__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+@media (max-width: 560px) {
+  .admin-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 560px) {
+  .page {
+    padding: var(--space-3) var(--space-2) var(--space-4);
+  }
+
+  .nav {
+    padding: var(--space-1) var(--space-2);
+  }
+}
