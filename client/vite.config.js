@@ -10,11 +10,10 @@ export default defineConfig({
   // be set here too, or the page itself stays framable regardless of what
   // the API sends.
   server: {
-    // TEMPORARILY DISABLED for clickjacking PoC recording — restore before committing.
-    // headers: {
-    //   'X-Frame-Options': 'SAMEORIGIN',
-    //   'Content-Security-Policy': "frame-ancestors 'self'",
-    // },
+    headers: {
+      'X-Frame-Options': 'SAMEORIGIN',
+      'Content-Security-Policy': "frame-ancestors 'self'",
+    },
   },
   preview: {
     headers: {
