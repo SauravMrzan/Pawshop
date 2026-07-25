@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { env } from './config/env.js';
 import healthRoutes from './routes/healthRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import mfaRoutes from './routes/mfaRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import checkoutRoutes from './routes/checkoutRoutes.js';
@@ -35,6 +36,7 @@ app.use(cookieParser());
 
 app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/mfa', mfaRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/checkout', checkoutRoutes);

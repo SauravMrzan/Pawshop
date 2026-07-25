@@ -7,6 +7,8 @@ import { env } from '../config/env.js';
 import { isNonEmptyString, isStrongPassword } from '../utils/validation.js';
 import { verifyRecaptcha } from '../utils/recaptcha.js';
 
+const MFA_CHALLENGE_EXPIRY = '5m';
+
 const SESSION_COOKIE = 'session';
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -21,11 +23,20 @@ const cookieOptions = {
   maxAge: SESSION_MAX_AGE_MS,
 };
 
-function issueSession(res, user) {
-  const token = jwt.sign({ sub: user._id.toString() }, env.jwtSecret, {
+export function issueSession(res, user) {
+  const token = jwt.sign({ sub: user._id.toString(), purpose: 'session' }, env.jwtSecret, {
     expiresIn: '7d',
   });
   res.cookie(SESSION_COOKIE, token, cookieOptions);
+}
+
+// Returned in the response body (never set as a cookie) so the client can
+// hand it back to /auth/mfa/verify-login once it has a TOTP code — proves
+// the password step already passed without granting a session yet.
+function issueMfaChallenge(user) {
+  return jwt.sign({ sub: user._id.toString(), purpose: 'mfa-challenge' }, env.jwtSecret, {
+    expiresIn: MFA_CHALLENGE_EXPIRY,
+  });
 }
 
 export async function register(req, res) {
@@ -75,8 +86,12 @@ export async function login(req, res) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
+  if (user.mfaEnabled) {
+    return res.json({ mfaRequired: true, challengeToken: issueMfaChallenge(user) });
+  }
+
   issueSession(res, user);
-  return res.json({ user: { id: user._id, email: user.email, role: user.role } });
+  return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
 
 // Verifies the ID token Google's Identity Services library hands back to the
@@ -116,8 +131,12 @@ export async function googleLogin(req, res) {
     user = await User.create({ email: normalizedEmail, passwordHash });
   }
 
+  if (user.mfaEnabled) {
+    return res.json({ mfaRequired: true, challengeToken: issueMfaChallenge(user) });
+  }
+
   issueSession(res, user);
-  return res.json({ user: { id: user._id, email: user.email, role: user.role } });
+  return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
 
 export function logout(_req, res) {
@@ -130,11 +149,9 @@ export async function me(req, res) {
   if (!user) {
     return res.status(401).json({ message: 'Not authenticated' });
   }
-  return res.json({ user: { id: user._id, email: user.email, role: user.role } });
+  return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
 
-// Explicitly whitelisted: email and newPassword are the only editable fields.
-// role is never read from the request body, so it can never be mass-assigned.
 export async function updateProfile(req, res) {
   const { email, currentPassword, newPassword } = req.body;
 
@@ -178,7 +195,7 @@ export async function updateProfile(req, res) {
 
   await user.save();
 
-  return res.json({ user: { id: user._id, email: user.email, role: user.role } });
+  return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
 
 export async function deleteAccount(req, res) {
