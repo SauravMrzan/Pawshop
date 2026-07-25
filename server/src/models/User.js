@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // select: false — never included in a query unless explicitly requested
+    // (.select('+mfaSecret')), same reasoning as keeping it out of API responses.
+    mfaSecret: {
+      type: String,
+      select: false,
+    },
   },
   {
     strict: true,
