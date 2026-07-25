@@ -12,6 +12,7 @@ import checkoutRoutes from './routes/checkoutRoutes.js';
 import adminProductRoutes from './routes/adminProductRoutes.js';
 import adminOrderRoutes from './routes/adminOrderRoutes.js';
 import adminUserRoutes from './routes/adminUserRoutes.js';
+import adminAuditRoutes from './routes/adminAuditRoutes.js';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/checkout', checkoutRoutes);
 app.use('/api/admin/products', adminProductRoutes);
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/admin/users', adminUserRoutes);
+app.use('/api/admin/audit-logs', adminAuditRoutes);
 
 // Catches any unhandled error from a route (including thrown TypeErrors from
 // malformed input) and returns a generic message — never the stack trace or

@@ -6,6 +6,7 @@ import { User } from '../models/User.js';
 import { env } from '../config/env.js';
 import { isNonEmptyString, isStrongPassword } from '../utils/validation.js';
 import { verifyRecaptcha } from '../utils/recaptcha.js';
+import { logAuditEvent } from '../utils/auditLog.js';
 
 const MFA_CHALLENGE_EXPIRY = '5m';
 
@@ -83,6 +84,7 @@ export async function login(req, res) {
 
   const user = await User.findOne({ email: email.trim().toLowerCase() });
   if (!user) {
+    await logAuditEvent('login_failed_unknown_email', req, { email: email.trim().toLowerCase() });
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
@@ -92,17 +94,24 @@ export async function login(req, res) {
   // message as a wrong password, so a locked account isn't distinguishable
   // from one that doesn't exist.
   if (user.lockUntil && user.lockUntil > new Date()) {
+    await logAuditEvent('login_failed_locked', req, { userId: user._id, email: user.email });
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
   const validPassword = await argon2.verify(user.passwordHash, password);
   if (!validPassword) {
     user.failedLoginAttempts += 1;
+    let justLocked = false;
     if (user.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
       user.lockUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
       user.failedLoginAttempts = 0;
+      justLocked = true;
     }
     await user.save();
+    await logAuditEvent('login_failed_wrong_password', req, { userId: user._id, email: user.email });
+    if (justLocked) {
+      await logAuditEvent('account_locked', req, { userId: user._id, email: user.email });
+    }
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
@@ -116,6 +125,7 @@ export async function login(req, res) {
     return res.json({ mfaRequired: true, challengeToken: issueMfaChallenge(user) });
   }
 
+  await logAuditEvent('login_success', req, { userId: user._id, email: user.email });
   issueSession(res, user);
   return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
@@ -171,6 +181,7 @@ export async function googleLogin(req, res) {
     return res.json({ mfaRequired: true, challengeToken: issueMfaChallenge(user) });
   }
 
+  await logAuditEvent('google_login_success', req, { userId: user._id, email: user.email });
   issueSession(res, user);
   return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
@@ -187,6 +198,7 @@ export async function logout(req, res) {
       const payload = jwt.verify(token, env.jwtSecret);
       if (payload.purpose === 'session') {
         await User.updateOne({ _id: payload.sub }, { $inc: { tokenVersion: 1 } });
+        await logAuditEvent('logout', req, { userId: payload.sub });
       }
     } catch {
       // already invalid or expired — nothing to revoke
@@ -254,6 +266,7 @@ export async function updateProfile(req, res) {
   // tokenVersion, instead of being logged out by its own password change.
   if (wantsPasswordChange) {
     issueSession(res, user);
+    await logAuditEvent('password_changed', req, { userId: user._id, email: user.email });
   }
 
   return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
@@ -277,6 +290,7 @@ export async function deleteAccount(req, res) {
   }
 
   await User.deleteOne({ _id: user._id });
+  await logAuditEvent('account_deleted', req, { userId: user._id, email: user.email });
 
   res.clearCookie(SESSION_COOKIE, cookieOptions);
   return res.status(204).send();

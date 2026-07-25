@@ -44,6 +44,10 @@ export default function Dashboard() {
   const [createUserError, setCreateUserError] = useState('');
   const [creatingUser, setCreatingUser] = useState(false);
 
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLogsLoading, setAuditLogsLoading] = useState(false);
+  const [auditLogsError, setAuditLogsError] = useState('');
+
   useEffect(() => {
     apiClient
       .get('/auth/me')
@@ -63,6 +67,16 @@ export default function Dashboard() {
       .then((res) => setUsers(res.data.users))
       .catch(() => setUsersError('Could not load users'))
       .finally(() => setUsersLoading(false));
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || user.role !== 'admin') return;
+    setAuditLogsLoading(true);
+    apiClient
+      .get('/admin/audit-logs')
+      .then((res) => setAuditLogs(res.data.logs))
+      .catch(() => setAuditLogsError('Could not load security events'))
+      .finally(() => setAuditLogsLoading(false));
   }, [user]);
 
   const handleLogout = async () => {
@@ -458,6 +472,33 @@ export default function Dashboard() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {user?.role === 'admin' && (
+        <section className="admin-users-section">
+          <h2>Recent security events</h2>
+
+          {auditLogsError && <p role="alert">{auditLogsError}</p>}
+
+          {auditLogsLoading ? (
+            <p>Loading security events...</p>
+          ) : auditLogs.length === 0 ? (
+            <p>No security events yet.</p>
+          ) : (
+            <div className="admin-list">
+              {auditLogs.map((log) => (
+                <div className="admin-row card" key={log.id}>
+                  <div className="admin-row__info">
+                    <span className="admin-row__name">{log.action}</span>
+                    <span className="badge badge-neutral">{log.email || 'unknown'}</span>
+                    <span className="badge badge-neutral">{log.ip}</span>
+                  </div>
+                  <span>{new Date(log.createdAt).toLocaleString()}</span>
+                </div>
+              ))}
             </div>
           )}
         </section>

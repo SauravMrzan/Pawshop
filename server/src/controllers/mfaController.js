@@ -5,6 +5,7 @@ import { env } from '../config/env.js';
 import { issueSession } from './authController.js';
 import { isNonEmptyString } from '../utils/validation.js';
 import { generateMfaSecret, buildOtpauthUrl, buildQrCodeDataUrl, verifyMfaToken } from '../utils/mfa.js';
+import { logAuditEvent } from '../utils/auditLog.js';
 
 function userResponse(user) {
   return { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled };
@@ -50,11 +51,13 @@ export async function mfaEnable(req, res) {
     return res.status(400).json({ message: 'Start MFA setup before enabling it' });
   }
   if (!verifyMfaToken(code, user.mfaSecret)) {
+    await logAuditEvent('mfa_enable_failed', req, { userId: user._id, email: user.email });
     return res.status(401).json({ message: 'Invalid authenticator code' });
   }
 
   user.mfaEnabled = true;
   await user.save();
+  await logAuditEvent('mfa_enabled', req, { userId: user._id, email: user.email });
 
   return res.json({ user: userResponse(user) });
 }
@@ -82,12 +85,14 @@ export async function mfaDisable(req, res) {
   // Requiring a valid code (not just the password) to turn MFA off means a
   // hijacked session cookie alone can't downgrade the account's security.
   if (!verifyMfaToken(code, user.mfaSecret)) {
+    await logAuditEvent('mfa_disable_failed', req, { userId: user._id, email: user.email });
     return res.status(401).json({ message: 'Invalid authenticator code' });
   }
 
   user.mfaEnabled = false;
   user.mfaSecret = undefined;
   await user.save();
+  await logAuditEvent('mfa_disabled', req, { userId: user._id, email: user.email });
 
   return res.json({ user: userResponse(user) });
 }
@@ -115,9 +120,11 @@ export async function mfaVerifyLogin(req, res) {
   }
 
   if (!verifyMfaToken(code, user.mfaSecret)) {
+    await logAuditEvent('mfa_verify_failed', req, { userId: user._id, email: user.email });
     return res.status(401).json({ message: 'Invalid authenticator code' });
   }
 
+  await logAuditEvent('login_success', req, { userId: user._id, email: user.email, metadata: { via: 'mfa' } });
   issueSession(res, user);
   return res.json({ user: userResponse(user) });
 }

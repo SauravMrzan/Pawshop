@@ -1,6 +1,7 @@
 import argon2 from 'argon2';
 import { User } from '../models/User.js';
 import { isValidObjectId, isNonEmptyString } from '../utils/validation.js';
+import { logAuditEvent } from '../utils/auditLog.js';
 
 export async function listUsers(_req, res) {
   const users = await User.find().select('email role createdAt').sort({ createdAt: -1 });
@@ -31,6 +32,11 @@ export async function createUser(req, res) {
   const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
   const user = await User.create({ email: normalizedEmail, passwordHash });
 
+  await logAuditEvent('admin_user_created', req, {
+    userId: req.userId,
+    metadata: { createdUserId: user._id, createdEmail: user.email },
+  });
+
   return res.status(201).json({ user: { id: user._id, email: user.email, role: user.role } });
 }
 
@@ -53,5 +59,9 @@ export async function deleteUser(req, res) {
   }
 
   await User.deleteOne({ _id: target._id });
+  await logAuditEvent('admin_user_deleted', req, {
+    userId: req.userId,
+    metadata: { deletedUserId: target._id, deletedEmail: target.email },
+  });
   return res.status(204).send();
 }
