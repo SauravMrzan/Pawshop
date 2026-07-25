@@ -36,6 +36,14 @@ const userSchema = new mongoose.Schema(
     lockUntil: {
       type: Date,
     },
+    // Bumped to invalidate every outstanding session JWT at once (logout,
+    // password change) — requireAuth rejects any token whose embedded
+    // tokenVersion doesn't match this. Stateless JWTs can't otherwise be
+    // revoked before they expire.
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     strict: true,

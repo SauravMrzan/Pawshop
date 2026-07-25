@@ -27,9 +27,11 @@ const cookieOptions = {
 };
 
 export function issueSession(res, user) {
-  const token = jwt.sign({ sub: user._id.toString(), purpose: 'session' }, env.jwtSecret, {
-    expiresIn: '7d',
-  });
+  const token = jwt.sign(
+    { sub: user._id.toString(), purpose: 'session', tokenVersion: user.tokenVersion },
+    env.jwtSecret,
+    { expiresIn: '7d' }
+  );
   res.cookie(SESSION_COOKIE, token, cookieOptions);
 }
 
@@ -173,7 +175,23 @@ export async function googleLogin(req, res) {
   return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
 
-export function logout(_req, res) {
+// Bumps tokenVersion (best-effort — an already-invalid/expired cookie has
+// nothing to revoke) so the token being logged out can't be replayed even
+// if it was captured before this request. Clearing the cookie alone only
+// stops this browser from sending it again; it doesn't stop anyone else
+// who already has a copy.
+export async function logout(req, res) {
+  const token = req.cookies?.session;
+  if (token) {
+    try {
+      const payload = jwt.verify(token, env.jwtSecret);
+      if (payload.purpose === 'session') {
+        await User.updateOne({ _id: payload.sub }, { $inc: { tokenVersion: 1 } });
+      }
+    } catch {
+      // already invalid or expired — nothing to revoke
+    }
+  }
   res.clearCookie(SESSION_COOKIE, cookieOptions);
   return res.status(204).send();
 }
@@ -225,9 +243,18 @@ export async function updateProfile(req, res) {
       return res.status(400).json({ message: 'New password must be at least 8 characters' });
     }
     user.passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id });
+    // Kills every other session issued under the old password — otherwise a
+    // stolen cookie would keep working right through a password change.
+    user.tokenVersion += 1;
   }
 
   await user.save();
+
+  // Reissue so the device making this change stays logged in under the new
+  // tokenVersion, instead of being logged out by its own password change.
+  if (wantsPasswordChange) {
+    issueSession(res, user);
+  }
 
   return res.json({ user: { id: user._id, email: user.email, role: user.role, mfaEnabled: user.mfaEnabled } });
 }
