@@ -15,6 +15,20 @@ export default function Dashboard() {
   const [profileSuccess, setProfileSuccess] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
 
+  const [mfaSetupData, setMfaSetupData] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaPassword, setMfaPassword] = useState('');
+  const [mfaError, setMfaError] = useState('');
+  const [mfaSuccess, setMfaSuccess] = useState('');
+  const [startingMfaSetup, setStartingMfaSetup] = useState(false);
+  const [enablingMfa, setEnablingMfa] = useState(false);
+
+  const [confirmingDisableMfa, setConfirmingDisableMfa] = useState(false);
+  const [disableMfaCode, setDisableMfaCode] = useState('');
+  const [disableMfaPassword, setDisableMfaPassword] = useState('');
+  const [disableMfaError, setDisableMfaError] = useState('');
+  const [disablingMfa, setDisablingMfa] = useState(false);
+
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
@@ -76,6 +90,58 @@ export default function Dashboard() {
       setProfileError(err.response?.data?.message || 'Could not update profile');
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleStartMfaSetup = async () => {
+    setMfaError('');
+    setMfaSuccess('');
+    setStartingMfaSetup(true);
+    try {
+      const res = await apiClient.post('/auth/mfa/setup');
+      setMfaSetupData(res.data);
+    } catch (err) {
+      setMfaError(err.response?.data?.message || 'Could not start MFA setup');
+    } finally {
+      setStartingMfaSetup(false);
+    }
+  };
+
+  const handleEnableMfa = async (e) => {
+    e.preventDefault();
+    setMfaError('');
+    setEnablingMfa(true);
+    try {
+      const res = await apiClient.post('/auth/mfa/enable', { currentPassword: mfaPassword, code: mfaCode });
+      setUser(res.data.user);
+      setMfaSetupData(null);
+      setMfaCode('');
+      setMfaPassword('');
+      setMfaSuccess('Two-factor authentication is now enabled.');
+    } catch (err) {
+      setMfaError(err.response?.data?.message || 'Could not enable MFA');
+    } finally {
+      setEnablingMfa(false);
+    }
+  };
+
+  const handleDisableMfa = async (e) => {
+    e.preventDefault();
+    setDisableMfaError('');
+    setDisablingMfa(true);
+    try {
+      const res = await apiClient.post('/auth/mfa/disable', {
+        currentPassword: disableMfaPassword,
+        code: disableMfaCode,
+      });
+      setUser(res.data.user);
+      setConfirmingDisableMfa(false);
+      setDisableMfaCode('');
+      setDisableMfaPassword('');
+    } catch (err) {
+      setDisableMfaError(err.response?.data?.message || 'Could not disable MFA');
+    } finally {
+      setDisablingMfa(false);
     }
   };
 
@@ -162,6 +228,130 @@ export default function Dashboard() {
               {savingProfile ? 'Saving...' : 'Save changes'}
             </button>
           </form>
+
+          <div className="mfa-section">
+            <h2>Two-factor authentication</h2>
+            {user && (
+              <p>
+                Status:{' '}
+                <span className={`badge ${user.mfaEnabled ? 'badge-ok' : 'badge-neutral'}`}>
+                  {user.mfaEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+              </p>
+            )}
+
+            {!user?.mfaEnabled && !mfaSetupData && (
+              <button className="btn btn-primary" onClick={handleStartMfaSetup} disabled={startingMfaSetup}>
+                {startingMfaSetup ? 'Starting...' : 'Enable two-factor authentication'}
+              </button>
+            )}
+
+            {mfaSetupData && (
+              <form onSubmit={handleEnableMfa}>
+                <p>Scan this QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.):</p>
+                <img src={mfaSetupData.qrCodeDataUrl} alt="MFA QR code" width={200} height={200} />
+                <p>
+                  Or enter this code manually: <code>{mfaSetupData.secret}</code>
+                </p>
+                <div>
+                  <label htmlFor="mfaCode">6-digit code from your app</label>
+                  <input
+                    id="mfaCode"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                    required
+                  />
+                </div>
+                <PasswordField
+                  id="mfaPassword"
+                  label="Current password"
+                  value={mfaPassword}
+                  onChange={(e) => setMfaPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                {mfaError && <p role="alert">{mfaError}</p>}
+                <div className="danger-zone__actions">
+                  <button type="submit" className="btn btn-primary" disabled={enablingMfa || mfaCode.length !== 6}>
+                    {enablingMfa ? 'Confirming...' : 'Confirm and enable'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMfaSetupData(null);
+                      setMfaCode('');
+                      setMfaPassword('');
+                      setMfaError('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {!mfaSetupData && mfaError && <p role="alert">{mfaError}</p>}
+            {mfaSuccess && <p className="form-success">{mfaSuccess}</p>}
+
+            {user?.mfaEnabled && (
+              <>
+                {!confirmingDisableMfa ? (
+                  <button className="btn btn-danger" onClick={() => setConfirmingDisableMfa(true)}>
+                    Disable two-factor authentication
+                  </button>
+                ) : (
+                  <form onSubmit={handleDisableMfa}>
+                    <div>
+                      <label htmlFor="disableMfaCode">6-digit code from your app</label>
+                      <input
+                        id="disableMfaCode"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        autoComplete="one-time-code"
+                        value={disableMfaCode}
+                        onChange={(e) => setDisableMfaCode(e.target.value.replace(/\D/g, ''))}
+                        required
+                      />
+                    </div>
+                    <PasswordField
+                      id="disableMfaPassword"
+                      label="Current password"
+                      value={disableMfaPassword}
+                      onChange={(e) => setDisableMfaPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                    />
+                    {disableMfaError && <p role="alert">{disableMfaError}</p>}
+                    <div className="danger-zone__actions">
+                      <button
+                        type="submit"
+                        className="btn btn-danger"
+                        disabled={disablingMfa || disableMfaCode.length !== 6}
+                      >
+                        {disablingMfa ? 'Disabling...' : 'Confirm disable'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setConfirmingDisableMfa(false);
+                          setDisableMfaCode('');
+                          setDisableMfaPassword('');
+                          setDisableMfaError('');
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
+          </div>
 
           <button className="dashboard-logout-btn" onClick={handleLogout}>
             Log Out

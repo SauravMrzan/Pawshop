@@ -17,11 +17,19 @@ export default function Login() {
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const recaptchaRef = useRef(null);
 
+  const [challengeToken, setChallengeToken] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [verifyingMfa, setVerifyingMfa] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await apiClient.post('/auth/login', { email, password, recaptchaToken });
+      const res = await apiClient.post('/auth/login', { email, password, recaptchaToken });
+      if (res.data.mfaRequired) {
+        setChallengeToken(res.data.challengeToken);
+        return;
+      }
       navigate(redirect || '/');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
@@ -29,6 +37,63 @@ export default function Login() {
       setRecaptchaToken(null);
     }
   };
+
+  const handleMfaSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setVerifyingMfa(true);
+    try {
+      await apiClient.post('/auth/mfa/verify-login', { challengeToken, code: mfaCode });
+      navigate(redirect || '/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Verification failed');
+    } finally {
+      setVerifyingMfa(false);
+    }
+  };
+
+  if (challengeToken) {
+    return (
+      <div className="auth-page">
+        <div className="card auth-card">
+          <h1>Two-Factor Verification</h1>
+          <p>Enter the 6-digit code from your authenticator app.</p>
+          <form onSubmit={handleMfaSubmit}>
+            <div>
+              <label htmlFor="mfaCode">Authenticator code</label>
+              <input
+                id="mfaCode"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                autoComplete="one-time-code"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                autoFocus
+                required
+              />
+            </div>
+            {error && <p role="alert">{error}</p>}
+            <button type="submit" className="btn btn-primary" disabled={verifyingMfa || mfaCode.length !== 6}>
+              {verifyingMfa ? 'Verifying...' : 'Verify'}
+            </button>
+          </form>
+          <button
+            type="button"
+            className="auth-card__footer-link"
+            onClick={() => {
+              setChallengeToken(null);
+              setMfaCode('');
+              setError('');
+            }}
+          >
+            Back to login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page">
@@ -68,7 +133,7 @@ export default function Login() {
           </button>
         </form>
         <div className="auth-card__oauth">
-          <GoogleSignInButton redirectTo={redirect || '/'} onError={setError} />
+          <GoogleSignInButton redirectTo={redirect || '/'} onError={setError} onMfaRequired={setChallengeToken} />
         </div>
         <p className="auth-card__footer-link">
           Need an account? <Link to="/register">Register</Link>

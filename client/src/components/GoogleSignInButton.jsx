@@ -6,7 +6,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 // Renders nothing if VITE_GOOGLE_CLIENT_ID isn't set yet — mirrors the
 // backend's graceful-skip behavior while OAuth setup is in progress.
-export default function GoogleSignInButton({ redirectTo = '/', onError }) {
+export default function GoogleSignInButton({ redirectTo = '/', onError, onMfaRequired }) {
   const navigate = useNavigate();
   const buttonRef = useRef(null);
 
@@ -27,7 +27,11 @@ export default function GoogleSignInButton({ redirectTo = '/', onError }) {
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response) => {
           try {
-            await apiClient.post('/auth/google', { credential: response.credential });
+            const res = await apiClient.post('/auth/google', { credential: response.credential });
+            if (res.data.mfaRequired) {
+              onMfaRequired?.(res.data.challengeToken);
+              return;
+            }
             navigate(redirectTo);
           } catch (err) {
             onError?.(err.response?.data?.message || 'Google sign-in failed');
@@ -48,7 +52,7 @@ export default function GoogleSignInButton({ redirectTo = '/', onError }) {
     return () => {
       cancelled = true;
     };
-  }, [navigate, redirectTo, onError]);
+  }, [navigate, redirectTo, onError, onMfaRequired]);
 
   if (!GOOGLE_CLIENT_ID) return null;
 
