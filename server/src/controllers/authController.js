@@ -9,6 +9,9 @@ import { verifyRecaptcha } from '../utils/recaptcha.js';
 
 const MFA_CHALLENGE_EXPIRY = '5m';
 
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
 const SESSION_COOKIE = 'session';
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -81,9 +84,30 @@ export async function login(req, res) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
+  // Rejected before the password is even checked — authLimiter only caps
+  // attempts per source IP, so this is what stops an attacker rotating IPs
+  // from grinding this one account's password indefinitely. Same generic
+  // message as a wrong password, so a locked account isn't distinguishable
+  // from one that doesn't exist.
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
   const validPassword = await argon2.verify(user.passwordHash, password);
   if (!validPassword) {
+    user.failedLoginAttempts += 1;
+    if (user.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+      user.lockUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+      user.failedLoginAttempts = 0;
+    }
+    await user.save();
     return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
+  if (user.failedLoginAttempts > 0 || user.lockUntil) {
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
   }
 
   if (user.mfaEnabled) {
@@ -129,6 +153,16 @@ export async function googleLogin(req, res) {
       type: argon2.argon2id,
     });
     user = await User.create({ email: normalizedEmail, passwordHash });
+  }
+
+  // A verified Google identity is at least as strong a proof of ownership
+  // as a password, so it clears any lockout left over from password-guessing
+  // attempts — the account isn't stuck just because someone else was
+  // grinding its password.
+  if (user.failedLoginAttempts > 0 || user.lockUntil) {
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
   }
 
   if (user.mfaEnabled) {

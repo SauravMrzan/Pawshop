@@ -23,11 +23,18 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    // select: false — never included in a query unless explicitly requested
-    // (.select('+mfaSecret')), same reasoning as keeping it out of API responses.
+    // select: false — excluded from queries unless explicitly requested
     mfaSecret: {
       type: String,
       select: false,
+    },
+    // Per-account lockout — authLimiter alone only caps attempts per IP
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
     },
   },
   {
