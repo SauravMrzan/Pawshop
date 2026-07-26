@@ -36,7 +36,7 @@ export async function quote(req, res) {
 }
 
 export async function checkout(req, res) {
-  const { productId, quantity, price: clientPrice, shippingAddress: rawShippingAddress } = req.body;
+  const { productId, quantity, shippingAddress: rawShippingAddress } = req.body;
 
   const { error } = validateCheckoutInput(productId, quantity);
   if (error) return res.status(error.status).json({ message: error.message });
@@ -62,14 +62,15 @@ export async function checkout(req, res) {
     return res.status(400).json({ message: 'Not enough stock available' });
   }
 
-  const price = typeof clientPrice === 'number' && clientPrice >= 0 ? clientPrice : product.price;
-  const total = price * quantity;
+  // Total is derived from the DB price and the validated quantity only —
+  // any price or total sent by the client is ignored.
+  const total = product.price * quantity;
 
   const order = await Order.create({
     userId: req.userId,
     productId: product._id,
     quantity,
-    priceAtPurchase: price,
+    priceAtPurchase: product.price,
     shippingAddress,
     status: 'pending',
   });
