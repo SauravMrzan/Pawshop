@@ -217,7 +217,7 @@ export async function me(req, res) {
 }
 
 export async function updateProfile(req, res) {
-  const { email, currentPassword, newPassword, role } = req.body;
+  const { email, currentPassword, newPassword } = req.body;
 
   const user = await User.findById(req.userId);
   if (!user) {
@@ -226,9 +226,8 @@ export async function updateProfile(req, res) {
 
   const wantsEmailChange = isNonEmptyString(email, 254);
   const wantsPasswordChange = isNonEmptyString(newPassword, 200);
-  const wantsRoleChange = role === 'admin' || role === 'user';
 
-  if (!wantsEmailChange && !wantsPasswordChange && !wantsRoleChange) {
+  if (!wantsEmailChange && !wantsPasswordChange) {
     return res.status(400).json({ message: 'Nothing to update' });
   }
 
@@ -259,10 +258,6 @@ export async function updateProfile(req, res) {
     // Kills every other session issued under the old password — otherwise a
     // stolen cookie would keep working right through a password change.
     user.tokenVersion += 1;
-  }
-
-  if (wantsRoleChange) {
-    user.role = role;
   }
 
   await user.save();
