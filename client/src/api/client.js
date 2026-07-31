@@ -14,4 +14,35 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
+const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
+let csrfToken;
+let csrfTokenRequest;
+
+async function getCsrfToken() {
+  if (csrfToken) return csrfToken;
+
+  if (!csrfTokenRequest) {
+    // Use the bare Axios function to avoid recursively invoking this
+    // instance's request interceptor.
+    csrfTokenRequest = axios
+      .get(`${apiClient.defaults.baseURL}/auth/csrf-token`, { withCredentials: true })
+      .then(({ data }) => {
+        csrfToken = data.csrfToken;
+        return csrfToken;
+      })
+      .finally(() => {
+        csrfTokenRequest = undefined;
+      });
+  }
+
+  return csrfTokenRequest;
+}
+
+apiClient.interceptors.request.use(async (config) => {
+  if (MUTATING_METHODS.has(config.method?.toLowerCase())) {
+    config.headers.set('X-CSRF-Token', await getCsrfToken());
+  }
+  return config;
+});
+
 export default apiClient;

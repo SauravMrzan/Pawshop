@@ -35,6 +35,7 @@ Mass-assignment / privilege-escalation protection (field whitelisting, strict sc
 Server-side price integrity at checkout (client-sent prices are ignored)
 Input validation and NoSQL-injection resistance (operator-shaped input is rejected before reaching queries)
 Security headers via helmet (clickjacking protection, baseline CSP)
+Double-submit CSRF tokens and trusted-origin validation on every state-changing request
 Structured audit logging of authentication and admin-sensitive events
 Prerequisites
 Node.js 20+

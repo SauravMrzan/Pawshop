@@ -13,6 +13,7 @@ import adminProductRoutes from './routes/adminProductRoutes.js';
 import adminOrderRoutes from './routes/adminOrderRoutes.js';
 import adminUserRoutes from './routes/adminUserRoutes.js';
 import adminAuditRoutes from './routes/adminAuditRoutes.js';
+import { csrfProtection } from './middleware/csrfProtection.js';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(csrfProtection);
 
 app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
